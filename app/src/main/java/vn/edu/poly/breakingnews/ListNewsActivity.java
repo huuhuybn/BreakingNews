@@ -7,6 +7,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.util.Xml;
@@ -26,6 +27,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import vn.edu.poly.breakingnews.adapter.AdapterNews;
 import vn.edu.poly.breakingnews.model.News;
 
 /**
@@ -36,6 +38,10 @@ public class ListNewsActivity extends AppCompatActivity {
 
 
     private RecyclerView lvListNews;
+    private AdapterNews adapterNews;
+    private LinearLayoutManager layoutManager;
+    private List<News> news;
+
 
     private String rssLink;
 
@@ -74,9 +80,9 @@ public class ListNewsActivity extends AppCompatActivity {
         protected List<News> doInBackground(String... strings) {
 
 
-            try {
+            ArrayList<News> newsArrayList = new ArrayList();
 
-                ArrayList<News> newsArrayList = new ArrayList();
+            try {
                 URL url = new URL(strings[0]);
 
                 XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
@@ -95,7 +101,6 @@ public class ListNewsActivity extends AppCompatActivity {
                  *
                  * In order to achieve this, we will make use of a boolean variable.
                  */
-                boolean insideItem = false;
 
                 // Returns the type of current event: START_TAG, END_TAG, etc..
                 int eventType = xpp.getEventType();
@@ -106,28 +111,32 @@ public class ListNewsActivity extends AppCompatActivity {
                     String nameTag = xpp.getName();
                     switch (eventType) {
                         case XmlPullParser.START_TAG:
+
+                            Log.e("Name", xpp.getName());
                             if (nameTag.equalsIgnoreCase("item")) {
                                 news = new News();
+                                Log.e("CREATE","NEWS");
                             }
                             break;
 
                         case XmlPullParser.TEXT:
                             text = xpp.getText();
-                            Log.e("TEXT", text);
                             break;
 
                         case XmlPullParser.END_TAG:
                             if (nameTag.equals("item"))
                                 newsArrayList.add(news);
-                            else if (nameTag.equalsIgnoreCase("title"))
-                                news.title = text;
-                            else if (nameTag.equalsIgnoreCase("description"))
-                                news.description = text;
-                            else if (nameTag.equalsIgnoreCase("pubDate"))
-                                news.pubDate = text;
-                            else if (nameTag.equalsIgnoreCase("link"))
-                                news.link = text;
+                            else if (news!=null & nameTag.equalsIgnoreCase("title"))
+                                news.title = text.trim();
+                            else if (news!=null & nameTag.equalsIgnoreCase("description"))
+                                news.description = text.trim();
+                            else if (news!=null & nameTag.equalsIgnoreCase("pubDate"))
+                                news.pubDate = text.trim();
+                            else if (news!=null & nameTag.equalsIgnoreCase("link"))
+                                news.link = text.trim();
 
+
+                            Log.e("END_TAG " + nameTag, text + "");
                             break;
 
                         default:
@@ -137,6 +146,8 @@ public class ListNewsActivity extends AppCompatActivity {
                     eventType = xpp.next(); //move to next element
                 }
 
+                Log.e("SIZE", newsArrayList.size() + "");
+
 
             } catch (MalformedURLException e) {
                 e.printStackTrace();
@@ -145,7 +156,7 @@ public class ListNewsActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return null;
+            return newsArrayList;
         }
 
         private InputStream getInputStream(URL url) {
@@ -159,6 +170,13 @@ public class ListNewsActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(List<News> news) {
             super.onPostExecute(news);
+
+            adapterNews = new AdapterNews(context, news);
+            layoutManager = new LinearLayoutManager(context);
+
+            lvListNews.setLayoutManager(layoutManager);
+            lvListNews.setAdapter(adapterNews);
+
         }
 
 
