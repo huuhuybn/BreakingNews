@@ -99,33 +99,44 @@ public class ListNewsActivity extends AppCompatActivity {
 
                 // Returns the type of current event: START_TAG, END_TAG, etc..
                 int eventType = xpp.getEventType();
+                String text = "";
 
                 News news = null;
                 while (eventType != XmlPullParser.END_DOCUMENT) {
-
+                    String nameTag = xpp.getName();
                     switch (eventType) {
                         case XmlPullParser.START_TAG:
-                            String nameTag = xpp.getName();
-                            Log.e("NAME", nameTag);
                             if (nameTag.equalsIgnoreCase("item")) {
                                 news = new News();
-                            } else if (news != null) {
-                                if (nameTag.equals("title")) {
-                                    news.title = xpp.nextText();
-                                    Log.e("title", xpp.nextText());
-                                }
                             }
+                            break;
+
+                        case XmlPullParser.TEXT:
+                            text = xpp.getText();
+                            Log.e("TEXT", text);
+                            break;
+
+                        case XmlPullParser.END_TAG:
+                            if (nameTag.equals("item"))
+                                newsArrayList.add(news);
+                            else if (nameTag.equalsIgnoreCase("title"))
+                                news.title = text;
+                            else if (nameTag.equalsIgnoreCase("description"))
+                                news.description = text;
+                            else if (nameTag.equalsIgnoreCase("pubDate"))
+                                news.pubDate = text;
+                            else if (nameTag.equalsIgnoreCase("link"))
+                                news.link = text;
 
                             break;
-                        case XmlPullParser.END_TAG:
 
+                        default:
                             break;
 
                     }
                     eventType = xpp.next(); //move to next element
                 }
 
-                Log.e("SIZE", newsArrayList.size() + "");
 
             } catch (MalformedURLException e) {
                 e.printStackTrace();
@@ -149,6 +160,8 @@ public class ListNewsActivity extends AppCompatActivity {
         protected void onPostExecute(List<News> news) {
             super.onPostExecute(news);
         }
+
+
     }
 
 
